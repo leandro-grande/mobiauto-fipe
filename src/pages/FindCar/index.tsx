@@ -78,7 +78,7 @@ export function FindCar() {
 		}
 
 		FetchCars();
-	}, [])
+	}, [carsBrandList])
 
 	const carBrands = carsBrandList.map(carBrand => ({
 		value: carBrand.codigo,
