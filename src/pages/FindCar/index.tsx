@@ -16,8 +16,8 @@ export function FindCar() {
 	const [carsModelList, setCarsModelList] = useState<CarType[]>([]);
 	const [carsYearList, setCarsYearsList] = useState<CarType[]>([]);
 	const [carBrand, setCarBrand] = useState('');
-	const [carModel, setCarModel] = useState({} as CarType);
-	const [carYear, setCarYear] = useState('');
+	const [carModel, setCarModel] = useState<CarType | null>(null);
+	const [carYear, setCarYear] = useState<string | null>('');
 
 	const { carSetPrice } = useCarPrice();
 
@@ -31,7 +31,7 @@ export function FindCar() {
 		}
 
 		try {
-			const { data } = await api.get(`carros/marcas/${carBrand}/modelos/${carModel.codigo}/anos/${carYear}`);
+			const { data } = await api.get(`carros/marcas/${carBrand}/modelos/${carModel?.codigo}/anos/${carYear}`);
 
 			carSetPrice(data.Marca, data.Modelo, data.AnoModelo, data.Valor);
 
@@ -42,7 +42,7 @@ export function FindCar() {
 	}
 
 	async function handleChangeBrandCar(value: string) {
-		setCarModel({} as CarType);
+		setCarModel(null);
 		setCarYear('');
 		setCarBrand(value);
 
@@ -56,6 +56,7 @@ export function FindCar() {
 	}
 
 	async function handleChangeCarModel(value: string, option: { value: string; label: string}) {
+		setCarYear(null);
 		setCarModel({
 			codigo: option.value,
 			nome: option.label
@@ -125,15 +126,16 @@ export function FindCar() {
 						options={carModels}
 						filterOption={filterOption}
 						onSelect={handleChangeCarModel}
-						value={carModel.nome}
+						value={carModel?.nome}
 					/>
 
-					{ carModel.codigo &&
+					{ carModel?.codigo &&
 						<Select
 						placeholder="ano"
 						style={{ width: '100%'}}
 						options={carYears}
 						onChange={handleChangeCarYear}
+						value={carYear}
 					/>
 					}
 
