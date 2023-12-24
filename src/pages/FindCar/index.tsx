@@ -18,10 +18,48 @@ export function FindCar() {
 	const [carBrand, setCarBrand] = useState('');
 	const [carModel, setCarModel] = useState<CarType | null>(null);
 	const [carYear, setCarYear] = useState<string | null>('');
+	const [carYearIsVisible, setCarYearIsVisible] = useState(false);
 
 	const { carSetPrice } = useCarPrice();
 
 	const navigate = useNavigate();
+
+
+	async function handleChangeBrandCar(value: string) {
+		setCarModel(null);
+		setCarYear(null);
+		setCarsYearsList([]);
+
+		try {
+			const { data } = await api.get(`carros/marcas/${value}/modelos`);
+
+			setCarsModelList(data.modelos);
+			setCarBrand(value);
+		} catch (error) {
+			console.log(error)
+		}
+	}
+
+	async function handleChangeCarModel(value: string, option: { value: string; label: string}) {
+		setCarYear(null);
+
+		try {
+			const { data } = await api.get(`carros/marcas/${carBrand}/modelos/${value}/anos`);
+
+			setCarsYearsList(data);
+			setCarYearIsVisible(true);
+			setCarModel({
+				codigo: option.value,
+				nome: option.label
+			});
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	async function handleChangeCarYear(value: string) {
+		setCarYear(value)
+	}
 
 	async function handleCheckPrice(event: FormEvent) {
 		event.preventDefault();
@@ -41,61 +79,28 @@ export function FindCar() {
 		}
 	}
 
-	async function handleChangeBrandCar(value: string) {
-		setCarModel(null);
-		setCarYear('');
-		setCarBrand(value);
-
-		try {
-			const { data } = await api.get(`carros/marcas/${value}/modelos`);
-
-			setCarsModelList(data.modelos);
-		} catch (error) {
-			console.log(error)
-		}
-	}
-
-	async function handleChangeCarModel(value: string, option: { value: string; label: string}) {
-		setCarYear(null);
-		setCarModel({
-			codigo: option.value,
-			nome: option.label
-		});
-
-		try {
-			const { data } = await api.get(`carros/marcas/${carBrand}/modelos/${value}/anos`);
-
-			setCarsYearsList(data);
-		} catch (error) {
-			console.log(error);
-		}
-	}
-
-	async function handleChangeCarYear(value: string) {
-		setCarYear(value)
-	}
-
 	useEffect(() => {
-		async function FetchCars() {
+		async function fetchCars() {
 			const { data } = await api.get('/carros/marcas')
 
 			setCarBrandList(data);
 		}
 
-		FetchCars();
-	}, [carsBrandList])
+		setCarYear(null);
+		fetchCars();
+	}, []);
 
-	const carBrands = carsBrandList.map(carBrand => ({
+	const carBrandsOptions = carsBrandList.map(carBrand => ({
 		value: carBrand.codigo,
 		label: carBrand.nome
 	}));
 
-	const carModels = carsModelList.map(model => ({
+	const carModelsOptions = carsModelList.map(model => ({
 		value: model.codigo,
 		label: model.nome
 	}));
 
-	const carYears = carsYearList.map(year => ({
+	const carYearsOptions = carsYearList.map(year => ({
 		value: year.codigo,
 		label: year.nome.split(' ')[0]
 	}));
@@ -114,7 +119,7 @@ export function FindCar() {
 						showSearch
 						placeholder="Marca"
 						style={{ width: '100%'}}
-						options={carBrands}
+						options={carBrandsOptions}
 						filterOption={filterOption}
 						onChange={handleChangeBrandCar}
 					/>
@@ -123,24 +128,27 @@ export function FindCar() {
 						showSearch
 						placeholder="Modelo"
 						style={{ width: '100%'}}
-						options={carModels}
+						options={carModelsOptions}
 						filterOption={filterOption}
 						onSelect={handleChangeCarModel}
 						value={carModel?.nome}
 					/>
 
-					{ carModel?.codigo &&
+					{ (carsYearList.length > 0 || carYearIsVisible)  &&
 						<Select
-						placeholder="ano"
-						style={{ width: '100%'}}
-						options={carYears}
-						onChange={handleChangeCarYear}
-						value={carYear}
-					/>
+							placeholder="ano"
+							style={{ width: '100%'}}
+							options={carYearsOptions}
+							onChange={handleChangeCarYear}
+							value={carYear}
+						/>
 					}
 
-					<Button htmlType="submit">
-							Consultar Preço
+					<Button
+						htmlType="submit"
+						disabled={carYear === null}
+					>
+							Consultar preço
 					</Button>
 				</Form>
 			</Main>
