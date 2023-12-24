@@ -1,8 +1,8 @@
 import { Button, Select } from "antd";
 import { FormEvent, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/axios";
 
-import { useNavigate } from "react-router-dom";
 import { useCarPrice } from "../../hooks/useCarPrice";
 import { Container, Form, Main } from './styles';
 
@@ -16,7 +16,7 @@ export function FindCar() {
 	const [carsModelList, setCarsModelList] = useState<CarType[]>([]);
 	const [carsYearList, setCarsYearsList] = useState<CarType[]>([]);
 	const [carBrand, setCarBrand] = useState('');
-	const [carModel, setCarModel] = useState('');
+	const [carModel, setCarModel] = useState({} as CarType);
 	const [carYear, setCarYear] = useState('');
 
 	const { carSetPrice } = useCarPrice();
@@ -31,7 +31,7 @@ export function FindCar() {
 		}
 
 		try {
-			const { data } = await api.get(`carros/marcas/${carBrand}/modelos/${carModel}/anos/${carYear}`);
+			const { data } = await api.get(`carros/marcas/${carBrand}/modelos/${carModel.codigo}/anos/${carYear}`);
 
 			carSetPrice(data.Marca, data.Modelo, data.AnoModelo, data.Valor);
 
@@ -42,7 +42,8 @@ export function FindCar() {
 	}
 
 	async function handleChangeBrandCar(value: string) {
-		setCarModel("");
+		setCarModel({} as CarType);
+		setCarYear('');
 		setCarBrand(value);
 
 		try {
@@ -54,8 +55,11 @@ export function FindCar() {
 		}
 	}
 
-	async function handleChangeCarModel(value: string) {
-		setCarModel(value);
+	async function handleChangeCarModel(value: string, option: { value: string; label: string}) {
+		setCarModel({
+			codigo: option.value,
+			nome: option.label
+		});
 
 		try {
 			const { data } = await api.get(`carros/marcas/${carBrand}/modelos/${value}/anos`);
@@ -120,10 +124,11 @@ export function FindCar() {
 						style={{ width: '100%'}}
 						options={carModels}
 						filterOption={filterOption}
-						onChange={handleChangeCarModel}
+						onSelect={handleChangeCarModel}
+						value={carModel.nome}
 					/>
 
-					{ carModel &&
+					{ carModel.codigo &&
 						<Select
 						placeholder="ano"
 						style={{ width: '100%'}}
